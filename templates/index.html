@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>HydroRando</title>
+
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+
+  <link rel="stylesheet"
+        href="{{ url_for('static',
+        filename='css/style.css') }}">
+
+</head>
+
+
+<body>
+
+<header class="app-header">
+
+  <div class="brand">
+
+    <img src="{{ url_for('static',
+         filename='images/logoprojet.png') }}"
+         alt="Logo HydroRando"
+         class="brand-logo">
+
+    <div>
+
+      <h1>HydroRando</h1>
+
+      <p>Randonnées et points d'eau à Lausanne</p>
+
+    </div>
+
+  </div>
+
+  <div class="header-stats">
+
+    <div class="header-stat">
+      <span>💧</span>
+      <strong id="top-fontaines">0</strong>
+      <small>Fontaines</small>
+    </div>
+
+    <div class="header-stat">
+      <span>🥾</span>
+      <strong id="top-sentiers">0</strong>
+      <small>Sentiers</small>
+    </div>
+
+  </div>
+
+  <img src="{{ url_for('static',
+       filename='images/HEIG-VD.png') }}"
+       alt="Logo HEIG-VD"
+       class="heig-logo">
+
+</header>
+
+
+<main class="app-layout">
+
+  <aside class="sidebar">
+
+    <nav class="tabs">
+
+      <button id="tab-search"
+              class="tab active"
+              onclick="setMode('search')">
+        <span>🗺️</span>
+        Explorer
+      </button>
+
+      <button id="tab-navigation"
+              class="tab"
+              onclick="setMode('navigation')">
+        <span>🥾</span>
+        Rando
+      </button>
+
+      <button id="tab-contribution"
+              class="tab"
+              onclick="setMode('contribution')">
+        <span>➕</span>
+        Contribuer
+      </button>
+
+    </nav>
+
+
+    <!-- EXPLORER -->
+    <section id="panel-search"
+             class="panel active-panel">
+
+      <h2>🗺️ Explorer</h2>
+
+      <p class="help">
+        Cliquez sur la carte pour mettre en évidence les sentiers proches.
+      </p>
+
+      <label class="label">
+        Difficulté
+      </label>
+
+      <select id="difficulty"
+              class="select-input">
+
+        <option value="facile">Facile / proche</option>
+        <option value="moyenne">Moyenne</option>
+        <option value="difficile">Difficile / large</option>
+
+      </select>
+
+      <h3>Couches visibles</h3>
+
+      <label class="layer-row">
+        <input type="checkbox"
+               checked
+               onchange="toggleLayer(fontaineLayer, this.checked)">
+        💧 Fontaines
+      </label>
+
+      <label class="layer-row">
+        <input type="checkbox"
+               checked
+               onchange="toggleLayer(lacLayer, this.checked)">
+        🌊 Lacs
+      </label>
+
+      <label class="layer-row">
+        <input type="checkbox"
+               checked
+               onchange="toggleLayer(riviereLayer, this.checked)">
+        〰️ Rivières
+      </label>
+
+      <label class="layer-row">
+        <input type="checkbox"
+               checked
+               onchange="toggleLayer(sentiersLayer, this.checked)">
+        🥾 Sentiers officiels
+      </label>
+
+      <label class="layer-row">
+        <input type="checkbox"
+               checked
+               onchange="toggleLayer(drawLayer, this.checked)">
+        👥 Sentiers contributeurs
+      </label>
+
+      <div class="stats-grid">
+
+        <div class="stat-card">
+          <strong id="stat-fontaines">0</strong>
+          <span>Fontaines</span>
+        </div>
+
+        <div class="stat-card">
+          <strong id="stat-sentiers">0</strong>
+          <span>Sentiers</span>
+        </div>
+
+        <div class="stat-card">
+          <strong id="stat-routes">0</strong>
+          <span>Contributions</span>
+        </div>
+
+        <div class="stat-card">
+          <strong id="stat-lacs">0</strong>
+          <span>Lacs</span>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- RANDO -->
+    <section id="panel-navigation"
+             class="panel">
+
+      <h2>🥾 Préparer une randonnée</h2>
+
+      <div class="step">
+        <b>1. Placez votre départ</b>
+        <p>Cliquez une première fois sur la carte.</p>
+      </div>
+
+      <div class="step">
+        <b>2. Ajoutez vos étapes</b>
+        <p>Cliquez sur les points intermédiaires du chemin.</p>
+      </div>
+
+      <div class="step">
+        <b>3. Lancez le GPS</b>
+        <p>Votre position sera affichée et orientée vers le prochain point.</p>
+      </div>
+
+      <div id="hike-results"
+           class="hike-results">
+        Aucun point sélectionné.
+      </div>
+
+      <button class="btn success"
+              onclick="startHike()">
+        ▶ Lancer GPS
+      </button>
+
+      <button class="btn danger"
+              onclick="stopHike()">
+        ⏹ Stop GPS
+      </button>
+
+      <button class="btn light"
+              onclick="clearHike()">
+        🧹 Effacer l'itinéraire
+      </button>
+
+    </section>
+
+
+    <!-- CONTRIBUTION -->
+    <section id="panel-contribution"
+             class="panel">
+
+      <h2>➕ Contribuer un sentier</h2>
+
+      <p class="help">
+        Dessinez un nouveau sentier ou chargez les contributions existantes
+        pour les modifier, les sauvegarder ou les supprimer.
+      </p>
+
+      <div class="step">
+        <b>Dessiner</b>
+        <p>Cliquez sur la carte pour tracer une ligne. Double-cliquez pour terminer.</p>
+      </div>
+
+      <div class="step">
+        <b>Modifier</b>
+        <p>Chargez les contributions, cliquez sur une ligne, puis déplacez ses sommets.</p>
+      </div>
+
+      <button class="btn primary"
+              onclick="saveRoute()">
+        💾 Sauvegarder nouveau sentier
+      </button>
+
+      <button class="btn primary"
+              onclick="loadRoutes()">
+        📂 Charger les contributions
+      </button>
+
+      <button class="btn success"
+              onclick="updateSelectedRoute()">
+        ✅ Mettre à jour le sentier sélectionné
+      </button>
+
+      <button class="btn danger"
+              onclick="deleteSelected()">
+        🗑 Supprimer le sentier sélectionné
+      </button>
+
+      <button class="btn light"
+              onclick="undoLastAction()">
+        ↩ Annuler
+      </button>
+
+    </section>
+
+    <section class="tip-box">
+      💡 Choisissez un onglet : Explorer, Rando ou Contribuer.
+    </section>
+
+  </aside>
+
+
+  <section class="map-area">
+
+    <div id="map"></div>
+
+    <div id="distance-info"
+         class="status-pill">
+      🔍 Mode exploration actif
+    </div>
+
+    <div class="map-controls">
+
+      <button onclick="zoomIn()">+</button>
+
+      <button onclick="zoomOut()">−</button>
+
+      <button onclick="centerOnLausanne()">📍</button>
+
+    </div>
+
+  </section>
+
+</main>
+
+
+<footer class="app-footer">
+
+  <span>Projet SIG – HEIG-VD</span>
+
+  <span>MELGET Elina & NGAMALEU Franck</span>
+
+  <span>© 2025 HydroRando</span>
+
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+
+<script src="{{ url_for('static',
+filename='main.js') }}"></script>
+
+</body>
+
+</html>
